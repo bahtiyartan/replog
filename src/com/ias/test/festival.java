@@ -49,6 +49,7 @@ public class festival {
 			String strExclude = config.get("exclude");
 			String strSaveData = "";
 
+			//STEP 4: transfer rows
 			int nSuccesful = 0;
 			int nItemCount = 0;
 			while (rs.next()) {
@@ -59,7 +60,10 @@ public class festival {
 				nItemCount++;
 				System.out.print(nItemCount + ": ");
 
+				//check query
 				if (strQuery != null && !strQuery.trim().isEmpty()) {
+					
+					//check savedata
 					if (strSaveData != null && (strSaveData.length()) > 0 && (strSaveData.indexOf(strExclude) >= 0)) {
 						System.out.print("eleminated");
 					} else {
