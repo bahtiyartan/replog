@@ -1,0 +1,13 @@
+source = jdbc:postgresql://localhost:5432/tztestdb
+source.user = postgres
+source.password = 123456
+
+target=jdbc:postgresql://localhost:5432/tztestdb
+target.user=postgres
+target.password=123456
+
+
+startdate=2020-03-06 00:00:00
+enddate=2020-03-07 00:00:00
+
+exclude=<BUSAREA>B<BUSAREA>
