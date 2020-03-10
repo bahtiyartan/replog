@@ -22,10 +22,12 @@ public class festival {
 			if (strRows[i].length() > 0) {
 
 				int nIndex = strRows[i].indexOf("=");
-				String strKey = strRows[i].substring(0, nIndex).trim();
-				String strValue = strRows[i].substring(nIndex + 1).trim();
 
-				config.put(strKey, strValue);
+				if (nIndex > 0) {
+					String strKey = strRows[i].substring(0, nIndex).trim();
+					String strValue = strRows[i].substring(nIndex + 1).trim();
+					config.put(strKey, strValue);
+				}
 			}
 		}
 
@@ -40,18 +42,24 @@ public class festival {
 			String startDate = config.get("startdate").trim();
 			String endDate = config.get("enddate").trim();
 
-			String strQuery = "SELECT SQLCMD, SAVEDATA, CREATEDAT FROM SYSREPLICATIONLOG WHERE CREATEDAT >= '" + startDate + "' AND CREATEDAT < '" + endDate
+			String strQuery = "SELECT SQLCMD, SAVEDATA, OPERATION, CREATEDAT FROM SYSREPLICATIONLOG WHERE CREATEDAT >= '" + startDate + "' AND CREATEDAT < '" + endDate
 					+ "' ORDER BY CREATEDAT, LOGTIME, OPERATION DESC";
 			System.out.println("SQL Query:" + strQuery);
 			System.out.println();
 			Statement stmt = source.createStatement();
 			ResultSet rs = stmt.executeQuery(strQuery);
 
-			String strExclude = config.get("exclude");
+			String[] aExcludeQuery = new String[0];
+			try {
+				config.get("excludequery").replace(" ", "").split(";");
+			} catch (Exception e) {
 
-			String[] aExclude = strExclude.split(";");
+			}
+
+			String[] aExcludeData = config.get("exclude").split(";");
 
 			String strSaveData = "";
+			int nOperation = 0;
 
 			//STEP 4: transfer rows
 			int nSuccesful = 0;
@@ -60,29 +68,36 @@ public class festival {
 
 				strQuery = rs.getString(1);
 				strSaveData = rs.getString(2);
+				nOperation = rs.getInt(3);
 
 				nItemCount++;
 				System.out.print(nItemCount + ": ");
 
 				//check query
-				if (strQuery != null && !strQuery.trim().isEmpty()) {
-
-					//check savedata
-					if (strSaveData != null && strSaveData.length() > 0 && isExcluded(strSaveData, aExclude)) {
-						System.out.print("eleminated");
-					} else {
-						try {
-							Statement statement = target.createStatement();
-							statement.execute(strQuery);
-							statement.close();
-							nSuccesful++;
-							System.out.print("successful");
-						} catch (Exception e) {
-							System.out.print("failed     ->" + e.getMessage());
-						}
-					}
-				} else {
+				if (strQuery == null || strQuery.trim().isEmpty()) {
 					System.out.print("no query  ");
+					continue;
+				}
+
+				//check savedata
+				if (nOperation == 0 && isDataExcluded(strSaveData, aExcludeData)) {
+					System.out.print("eleminated (data)");
+					continue;
+				}
+
+				if (nOperation > 0 && isQueryExcluded(strQuery, aExcludeQuery)) {
+					System.out.print("eleminated (query)");
+					continue;
+				}
+
+				try {
+					Statement statement = target.createStatement();
+					statement.execute(strQuery);
+					statement.close();
+					nSuccesful++;
+					System.out.print("successful");
+				} catch (Exception e) {
+					System.out.print("failed     ->" + e.getMessage());
 				}
 
 				System.out.println(" (" + nSuccesful + "/" + nItemCount + ")");
@@ -94,10 +109,30 @@ public class festival {
 
 	}
 
-	public static boolean isExcluded(String strSaveData, String[] pExcludeList) {
+	public static boolean isDataExcluded(String strSaveData, String[] pExcludeData) {
 
-		for (int i = 0; i < pExcludeList.length; i++) {
-			if (strSaveData.indexOf(pExcludeList[i]) >= 0) {
+		if (strSaveData != null && strSaveData.length() > 0) {
+
+			for (int i = 0; i < pExcludeData.length; i++) {
+				if (strSaveData.indexOf(pExcludeData[i]) >= 0) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public static boolean isQueryExcluded(String strQuery, String[] pExcludedQuery) {
+
+		int nWhereIndex = strQuery.indexOf("WHERE");
+		if (nWhereIndex > 0) {
+			strQuery = strQuery.substring(0, nWhereIndex);
+			strQuery = strQuery.replace(" ", "");
+		}
+
+		for (int i = 0; i < pExcludedQuery.length; i++) {
+			if (strQuery.indexOf(pExcludedQuery[i]) >= 0) {
 				return true;
 			}
 		}
