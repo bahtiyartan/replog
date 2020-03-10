@@ -40,13 +40,17 @@ public class festival {
 			String startDate = config.get("startdate").trim();
 			String endDate = config.get("enddate").trim();
 
-			String strQuery = "SELECT SQLCMD, SAVEDATA, CREATEDAT FROM SYSREPLICATIONLOG WHERE CREATEDAT >= '" + startDate + "' AND CREATEDAT < '" + endDate + "' ORDER BY CREATEDAT";
+			String strQuery = "SELECT SQLCMD, SAVEDATA, CREATEDAT FROM SYSREPLICATIONLOG WHERE CREATEDAT >= '" + startDate + "' AND CREATEDAT < '" + endDate
+					+ "' ORDER BY CREATEDAT, LOGTIME, OPERATION DESC";
 			System.out.println("SQL Query:" + strQuery);
 			System.out.println();
 			Statement stmt = source.createStatement();
 			ResultSet rs = stmt.executeQuery(strQuery);
 
 			String strExclude = config.get("exclude");
+
+			String[] aExclude = strExclude.split(";");
+
 			String strSaveData = "";
 
 			//STEP 4: transfer rows
@@ -62,9 +66,9 @@ public class festival {
 
 				//check query
 				if (strQuery != null && !strQuery.trim().isEmpty()) {
-					
+
 					//check savedata
-					if (strSaveData != null && (strSaveData.length()) > 0 && (strSaveData.indexOf(strExclude) >= 0)) {
+					if (strSaveData != null && strSaveData.length() > 0 && isExcluded(strSaveData, aExclude)) {
 						System.out.print("eleminated");
 					} else {
 						try {
@@ -88,6 +92,17 @@ public class festival {
 			e.printStackTrace();
 		}
 
+	}
+
+	public static boolean isExcluded(String strSaveData, String[] pExcludeList) {
+
+		for (int i = 0; i < pExcludeList.length; i++) {
+			if (strSaveData.indexOf(pExcludeList[i]) >= 0) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 }
