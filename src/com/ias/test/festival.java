@@ -51,9 +51,9 @@ public class festival {
 
 			String[] aExcludeQuery = new String[0];
 			try {
-				config.get("excludequery").replace(" ", "").split(";");
+				aExcludeQuery = config.get("excludequery").replace(" ", "").split(";");
 			} catch (Exception e) {
-
+				//do nothing
 			}
 
 			String[] aExcludeData = config.get("exclude").split(";");
@@ -75,18 +75,18 @@ public class festival {
 
 				//check query
 				if (strQuery == null || strQuery.trim().isEmpty()) {
-					System.out.print("no query  ");
+					System.out.println("no query  ");
 					continue;
 				}
 
 				//check savedata
 				if (nOperation == 0 && isDataExcluded(strSaveData, aExcludeData)) {
-					System.out.print("eleminated (data)");
+					System.out.println("eleminated (data)");
 					continue;
 				}
 
 				if (nOperation > 0 && isQueryExcluded(strQuery, aExcludeQuery)) {
-					System.out.print("eleminated (query)");
+					System.out.println("eleminated (query)");
 					continue;
 				}
 
