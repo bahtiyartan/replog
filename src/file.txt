@@ -1,1 +1,2 @@
 newbranch line 1
+newbranch line 2
