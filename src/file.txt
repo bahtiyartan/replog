@@ -1,2 +1,3 @@
 newbranch line 1
 newbranch line 2
+master branch line 3
